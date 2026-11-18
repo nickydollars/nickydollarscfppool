@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nicky Dollars College Football Playoff Pool</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#0a1220; --night-2:#101c33; --gold:#d8a31a; --gold-bright:#f0c040;
+    --chalk:#f6f3ea; --navy:#15233f; --line:rgba(246,243,234,0.16);
+    --card:#ffffff; --green-ok:#2d7a4f;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--night); color:var(--chalk); font-family:'Inter',sans-serif; padding-bottom:60px;
+    background-image:repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 56px); }
+  .no-screen{ display:none; }
+  header{ padding:32px 20px 20px; text-align:center; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, var(--night-2) 0%, var(--night) 100%); }
+  .brandline{ font-family:'Anton',sans-serif; font-size:clamp(16px,3.2vw,22px); letter-spacing:.05em; text-transform:uppercase; color:var(--gold-bright); margin-bottom:8px; }
+  .eyebrow{ font-family:'Oswald',sans-serif; letter-spacing:.3em; font-size:12px; color:var(--gold-bright); text-transform:uppercase; margin-bottom:8px;}
+  h1{ font-family:'Anton',sans-serif; font-size:clamp(28px,5.5vw,52px); margin:0; text-transform:uppercase; line-height:.95;}
+  h1 span{ color:var(--gold-bright);}
+
+  .tabbar{ display:flex; justify-content:center; gap:8px; margin:22px 0 0; flex-wrap:wrap;}
+  .tabbtn{ font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.06em; font-size:14px;
+    background:rgba(255,255,255,0.06); color:var(--chalk); border:1px solid var(--line); padding:10px 18px; border-radius:8px; cursor:pointer; }
+  .tabbtn.active{ background:var(--gold-bright); color:var(--navy); border-color:var(--gold-bright); font-weight:700;}
+  .tabpanel{ display:none; } .tabpanel.active{ display:block; }
+
+  .banner{ max-width:680px; margin:22px auto 0; padding:14px 18px; border-radius:10px; text-align:center; font-size:14.5px;
+    background:rgba(240,192,64,0.12); border:1px solid rgba(240,192,64,0.45); color:var(--gold-bright); }
+  .banner.closed{ background:rgba(255,155,138,0.1); border-color:rgba(255,155,138,0.45); color:#ff9b8a; }
+  .banner.open{ background:rgba(126,224,168,0.1); border-color:rgba(126,224,168,0.4); color:#7ee0a8; }
+
+  .entrybar{ max-width:760px; margin:22px auto 0; padding:0 20px; display:flex; gap:12px; flex-wrap:wrap; }
+  .entrybar .field{ flex:1; min-width:200px; }
+  .entrybar label{ display:block; font-family:'Oswald',sans-serif; font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--gold-bright); margin-bottom:6px;}
+  .entrybar input, .fieldrow input[type=text], .cfgrow input[type=text]{ width:100%; padding:13px 14px; border-radius:8px; border:1px solid var(--line);
+    background:rgba(255,255,255,0.06); color:var(--chalk); font-size:16px; font-family:'Inter',sans-serif;}
+  .entrybar input::placeholder{ color:rgba(246,243,234,0.4); }
+  .entrybar input:focus{ outline:2px solid var(--gold-bright); }
+
+  .actionbar{ max-width:760px; margin:14px auto 0; padding:0 20px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .btn{ font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.05em; font-size:13.5px; border:none; border-radius:8px; padding:12px 18px; cursor:pointer; font-weight:600; }
+  .btn-primary{ background:var(--gold-bright); color:var(--navy); }
+  .btn-ghost{ background:transparent; color:var(--chalk); border:1px solid var(--line); }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .progress{ font-size:13.5px; color:rgba(246,243,234,0.6); font-family:'Oswald',sans-serif; }
+  .msg{ max-width:760px; margin:10px auto 0; padding:0 20px; font-size:14px; }
+  .msg.ok{ color:#7ee0a8; } .msg.err{ color:#ff9b8a; }
+  .btn-bottom-save{ display:none; }
+  .msg-bottom{ display:none; }
+
+  /* ---- bracket: 5 columns, 4 rows. Column order is derived from the bracket tree in JS. ---- */
+  .scrollwrap{ overflow-x:auto; padding:30px 20px 10px; }
+  .bracket{ display:grid; grid-template-columns:250px 230px 230px 230px 190px; gap:18px; min-width:1200px; margin:0 auto; max-width:1300px; }
+  .col-head{ font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.1em; font-size:12.5px; color:var(--gold-bright); text-align:center; padding-bottom:10px; border-bottom:1px solid var(--line); margin-bottom:6px; }
+  .col-head small{ display:block; color:rgba(246,243,234,.55); letter-spacing:.04em; font-size:10.5px; margin-top:3px; }
+  .round{ display:grid; grid-template-rows:repeat(4, minmax(118px,1fr)); }
+  .match{ position:relative; background:var(--card); border-radius:10px; box-shadow:0 6px 14px rgba(0,0,0,.28); color:var(--navy); align-self:center; overflow:hidden; }
+  .meta{ font-family:'Oswald',sans-serif; font-size:9.5px; letter-spacing:.05em; color:#7a7060; padding:6px 10px 2px; text-transform:uppercase; display:flex; justify-content:space-between; }
+  .teambtn{ position:relative; width:100%; display:flex; align-items:center; gap:9px; padding:10px 12px; font-weight:600; font-size:14.5px;
+    border:none; background:transparent; text-align:left; cursor:pointer; border-top:1px solid #efebe0; color:var(--navy); font-family:'Inter',sans-serif;}
+  .teambtn:first-of-type{ border-top:none; }
+  .teambtn .seed{ font-family:'Oswald',sans-serif; font-size:11px; min-width:22px; text-align:center; background:#e9e4d6; border-radius:5px; padding:2px 0; color:#5a5240; }
+  .teambtn .dot{ width:10px; height:10px; border-radius:50%; flex:none; border:1px solid rgba(0,0,0,.15); }
+  .teambtn .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .teambtn:hover:not(:disabled):not(.ro){ background:#f3f0e6; }
+  .teambtn.picked{ background:#e7f4ec; color:var(--green-ok); }
+  .teambtn.picked::after{ content:"✓"; margin-left:auto; font-weight:700; }
+  .teambtn:disabled{ cursor:default; }
+  .teambtn.tbd{ color:#b7afa0; font-style:italic; font-weight:500; }
+  .teambtn.ro{ cursor:default; }
+  .teambtn.correct.picked{ background:var(--gold-bright); color:var(--navy); }
+  .teambtn.wrong.picked{ background:#fde7e3; color:#a8402f; text-decoration:line-through; }
+  .bye{ font-family:'Oswald',sans-serif; font-size:9px; letter-spacing:.08em; background:var(--navy); color:var(--gold-bright); border-radius:4px; padding:1px 5px; margin-left:auto; }
+  .teambtn.picked .bye{ margin-left:6px; }
+  .round:not(:first-child) .match::before{ content:""; position:absolute; left:-18px; top:50%; width:16px; height:1.5px; background:var(--gold); }
+  .champion-col{ display:flex; align-items:center; justify-content:center; }
+  .trophy-card{ background:linear-gradient(160deg, var(--gold-bright), var(--gold)); color:var(--navy); border-radius:14px; padding:20px 14px; text-align:center; box-shadow:0 10px 24px rgba(216,163,26,.35); width:100%; }
+  .trophy-card .cup{ font-size:32px; }
+  .trophy-card .label{ font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.1em; font-size:11.5px; margin-top:6px;}
+  .trophy-card .blank{ margin-top:8px; font-family:'Anton',sans-serif; font-size:19px; min-height:24px; }
+
+  .panelwrap{ max-width:900px; margin:30px auto 0; padding:0 20px; }
+  .lb-layout{ margin:26px auto 0; padding:0 20px; max-width:900px; }
+  table.lb{ width:100%; border-collapse:collapse; background:rgba(255,255,255,0.05); border-radius:10px; overflow:hidden; }
+  table.lb th, table.lb td{ padding:11px 12px; text-align:left; font-size:14.5px; }
+  table.lb th{ font-family:'Oswald',sans-serif; text-transform:uppercase; font-size:11px; letter-spacing:.05em; color:var(--gold-bright); border-bottom:1px solid var(--line); }
+  table.lb tr:nth-child(even){ background:rgba(255,255,255,0.03); }
+  table.lb tbody tr{ cursor:pointer; }
+  table.lb tbody tr:hover{ background:rgba(240,192,64,0.12); }
+  .pill{ display:inline-block; background:var(--gold-bright); color:var(--navy); border-radius:20px; padding:3px 11px; font-weight:700; font-size:13.5px; }
+  .small{ font-size:13px; color:rgba(246,243,234,0.55); }
+
+  .pingate{ max-width:360px; margin:60px auto; text-align:center; padding:30px 24px; background:rgba(255,255,255,0.05); border:1px solid var(--line); border-radius:14px; }
+  .pingate input{ width:100%; padding:12px; border-radius:8px; border:1px solid var(--line); background:rgba(255,255,255,0.08); color:var(--chalk); font-size:18px; text-align:center; letter-spacing:.2em; margin:14px 0; }
+  .pingate p{ font-size:12.5px; color:rgba(246,243,234,.6); }
+
+  h3.sec{ font-family:'Oswald',sans-serif; text-transform:uppercase; font-size:14px; color:var(--gold-bright); margin:0 0 10px; letter-spacing:.06em; }
+  .cfgrow{ display:grid; grid-template-columns:44px 1fr 56px; gap:10px; align-items:center; margin-bottom:8px; }
+  .cfgrow .sd{ font-family:'Oswald',sans-serif; color:var(--gold-bright); text-align:center; }
+  .cfgrow input[type=color]{ width:56px; height:44px; padding:2px; border-radius:8px; border:1px solid var(--line); background:transparent; }
+  .cfgrow input[type=text]{ padding:10px 12px; font-size:15px; }
+  .deadline-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  .deadline-row input{ flex:1; min-width:240px; padding:10px 12px; border-radius:8px; border:1px solid var(--line); background:rgba(255,255,255,0.06); color:var(--chalk); font-size:14px; }
+  table.log{ width:100%; border-collapse:collapse; margin-top:12px; }
+  table.log th, table.log td{ padding:8px 9px; text-align:left; border-bottom:1px solid var(--line); font-size:13.5px; }
+  table.log th{ color:var(--gold-bright); font-family:'Oswald',sans-serif; text-transform:uppercase; font-size:10.5px; letter-spacing:.04em; }
+
+  @media screen and (max-width: 880px){
+    header{ padding:24px 16px 18px; }
+    .tabbar{ gap:6px; }
+    .tabbtn{ padding:10px 14px; font-size:13px; flex:1; min-width:100px; }
+    .entrybar, .actionbar, .panelwrap, .lb-layout, .banner{ padding-left:16px; padding-right:16px; max-width:none; width:100%; }
+    .banner{ width:auto; margin-left:16px; margin-right:16px; }
+    .actionbar{ flex-direction:column; align-items:stretch; }
+    .actionbar .btn{ width:100%; }
+    #btnSave{ display:none; }
+    .btn-bottom-save{ display:block; width:calc(100% - 32px); margin:24px 16px 0; }
+    .msg-bottom{ display:block; max-width:none; width:100%; padding:0 16px; margin:10px auto 0; }
+    .progress{ text-align:center; }
+    .scrollwrap{ overflow-x:hidden; padding:24px 16px 10px; }
+    .bracket{ display:flex; flex-direction:column; min-width:0; width:100%; gap:0; margin:0; }
+    .round{ display:flex; flex-direction:column; gap:12px; grid-template-rows:none; }
+    .match{ grid-row:auto !important; align-self:stretch; width:100%; }
+    .col-head{ text-align:left; font-size:15px; margin:22px 0 10px; padding-bottom:8px; }
+    .bracket > div:first-child .col-head{ margin-top:0; }
+    .teambtn{ font-size:16px; padding:14px 14px; min-height:48px; }
+    .round:not(:first-child) .match::before{ display:none; }
+    .champion-col{ margin-top:24px; }
+    .trophy-card{ padding:24px 16px; }
+    .cfgrow{ grid-template-columns:36px 1fr 52px; }
+  }
+
+  @media print{
+    @page{ size: letter landscape; margin: 0.3in; }
+    body{ background:#fff; color:#111; padding:0; }
+    header .tabbar, .entrybar, .actionbar, .msg, .banner, #tab-board, #tab-admin{ display:none !important; }
+    #tab-pick{ display:block !important; }
+    header{ background:none; border-bottom:1px solid #999; padding:2px 0 6px; }
+    .eyebrow{ display:none; }
+    .brandline{ font-size:13px; color:#111; margin-bottom:2px; }
+    h1{ color:#111; font-size:22px; } h1 span{ color:#111; }
+    .print-only{ display:block !important; margin-bottom:4px !important; }
+    .scrollwrap{ overflow:visible; padding:6px 0 0; }
+    .bracket{ min-width:0; width:100%; gap:8px; grid-template-columns:repeat(5,1fr); }
+    .col-head{ font-size:10px; color:#a07800; }
+    .round{ grid-template-rows:repeat(4, minmax(60px,1fr)); }
+    .match{ box-shadow:none; border:1px solid #ccc; border-radius:3px; }
+    .meta{ display:none; }
+    .teambtn{ font-size:10px; padding:4px 5px; color:#111; }
+    .trophy-card{ padding:8px 6px; box-shadow:none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brandline">Nicky Dollars' College Football Playoff Pool</div>
+  <div class="eyebrow">12-Team CFP · 2026-27 · Title Game Jan 25 · Las Vegas</div>
+  <h1>Pick The <span>Bracket</span></h1>
+  <div class="tabbar">
+    <button class="tabbtn active" data-tab="pick">My Bracket</button>
+    <button class="tabbtn" data-tab="board">Leaderboard</button>
+    <button class="tabbtn" data-tab="admin">Admin</button>
+  </div>
+</header>
+
+<!-- ============ PICK TAB ============ -->
+<div class="tabpanel active" id="tab-pick">
+  <div class="no-screen print-only" style="display:none; text-align:center; margin-bottom:6px;">
+    <span id="printWho" style="font-family:'Oswald',sans-serif; font-size:12px;"></span>
+  </div>
+
+  <div class="banner" id="statusBanner">Loading…</div>
+
+  <div class="entrybar">
+    <div class="field"><label>Your name</label><input id="inpName" placeholder="First and Last"></div>
+    <div class="field"><label>Your Venmo handle</label><input id="inpVenmo" placeholder="@yourhandle"></div>
+    <div class="field" style="flex-basis:100%;"><label>Tiebreaker — total combined points in the title game</label>
+      <input id="inpTb" type="number" min="0" max="200" inputmode="numeric" placeholder="e.g. 54"></div>
+  </div>
+  <div class="actionbar">
+    <button class="btn btn-primary" id="btnSave">Save My Bracket</button>
+    <button class="btn btn-ghost" id="btnLoad">Load Saved Bracket</button>
+    <button class="btn btn-ghost" id="btnReset">Reset Picks</button>
+    <button class="btn btn-ghost" id="btnPrint">Print Bracket</button>
+    <span class="progress" id="progressText"></span>
+  </div>
+  <div class="msg" id="saveMsg"></div>
+  <div class="small" style="text-align:center; margin-top:8px; padding:0 16px;">Pick every game from the first round through the national championship. Seeds 1–4 have a first-round bye. The bracket is fixed — no re-seeding.</div>
+
+  <div class="scrollwrap"><div class="bracket" id="bracketPick"></div></div>
+
+  <button class="btn btn-primary btn-bottom-save" id="btnSaveBottom">Save My Bracket</button>
+  <div class="msg msg-bottom" id="saveMsgBottom"></div>
+</div>
+
+<!-- ============ LEADERBOARD TAB ============ -->
+<div class="tabpanel" id="tab-board">
+  <div class="lb-layout">
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+      <button class="btn btn-primary" id="btnRefreshBoard">Refresh Leaderboard</button>
+      <div class="small" id="boardStatus"></div>
+    </div>
+    <table class="lb" id="lbTable" style="margin-top:14px;">
+      <thead><tr><th>#</th><th>Name</th><th>Champion Pick</th><th>Pts</th><th>Max</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="small" style="margin-top:10px;">"Max" is the most points that entry can still reach. Click a name to see their bracket (revealed once entries close). Ties are broken by closest title-game total.</div>
+    <div id="lbDetailWrap" style="display:none; margin-top:20px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <strong id="lbDetailName"></strong>
+        <button class="btn btn-ghost" id="btnCloseLbDetail">Close</button>
+      </div>
+      <div class="scrollwrap" style="padding:0;"><div class="bracket" id="bracketLbDetail"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADMIN TAB ============ -->
+<div class="tabpanel" id="tab-admin">
+  <div id="pinGate" class="pingate">
+    <h3 style="margin-top:0;">Organizer</h3>
+    <p>Enter the organizer PIN.</p>
+    <input type="password" id="pinInput" placeholder="PIN" maxlength="8">
+    <button class="btn btn-primary" id="btnUnlock" style="width:100%;">Unlock</button>
+    <p id="pinErr" style="color:#ff9b8a;"></p>
+  </div>
+
+  <div id="adminContent" style="display:none;">
+    <div class="panelwrap">
+      <h3 class="sec">1 · Set the Field (selection day)</h3>
+      <div class="small" style="margin-bottom:12px;">Enter the 12 teams by seed. Saving opens the bracket to everyone — no code change or redeploy needed.</div>
+      <div id="cfgRows"></div>
+      <div class="deadline-row">
+        <label class="small" for="inpDeadline">Entries lock at:</label>
+        <input id="inpDeadline" type="text" value="2026-12-18T20:00:00-05:00">
+      </div>
+      <div class="small" style="margin-top:6px;">Default is 8:00 PM ET Dec 18 — the first kickoff. Use this format: 2026-12-18T20:00:00-05:00</div>
+      <div class="actionbar" style="padding:0; margin-top:14px;">
+        <button class="btn btn-primary" id="btnSaveField">Save Field</button>
+        <span class="progress" id="fieldMsg"></span>
+      </div>
+    </div>
+
+    <div class="panelwrap">
+      <h3 class="sec">2 · Official Results</h3>
+      <div class="actionbar" style="margin-left:0; padding:0;">
+        <button class="btn btn-primary" id="btnSaveResults">Save Official Results</button>
+        <button class="btn btn-ghost" id="btnLoadResults">Reload</button>
+        <span class="small">Title game total points:</span>
+        <input id="admTb" type="number" min="0" max="200" style="width:90px; padding:10px; border-radius:8px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--chalk); font-size:15px;">
+      </div>
+      <div class="msg" id="resultsMsg" style="padding:0;"></div>
+      <div class="small" id="lastUpdated"></div>
+    </div>
+    <div class="scrollwrap"><div class="bracket" id="bracketAdmin"></div></div>
+
+    <div class="panelwrap">
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <h3 class="sec" style="margin:0;">3 · All Submissions</h3>
+        <button class="btn btn-ghost" id="btnLoadSubmissions">Refresh Submissions</button>
+      </div>
+      <div class="small" id="submissionsStatus" style="margin-top:6px;"></div>
+      <table class="log" id="submissionsTable">
+        <thead><tr><th>Name</th><th>Venmo</th><th>Submitted</th><th>Champion</th><th>Tiebreak</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div id="submissionDetailWrap" style="display:none; margin-top:18px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <strong id="submissionDetailName"></strong>
+          <button class="btn btn-ghost" id="btnCloseSubmissionDetail">Close</button>
+        </div>
+        <div class="scrollwrap"><div class="bracket" id="bracketSubmissionDetail"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIG — everything you might want to tweak lives here
+   ===================================================================== */
+const ADMIN_PIN = '5153';
+const VIP_CODE  = '5153';                      // ?vip=5153 bypasses the entry lock
+const DEFAULT_DEADLINE = '2026-12-18T20:00:00-05:00'; // first kickoff (Fri Dec 18, 8pm ET)
+const PTS = { R1:1, QF:2, SF:4, F:8 };         // points per correct game, by round
+const KEY_PREFIX = 'cfp:';                     // keeps this pool separate from the World Cup rows in Airtable
+
+const ROUND_META = {
+  R1:{ label:'First Round',     sub:'Dec 18–19 · on campus' },
+  QF:{ label:'Quarterfinals',   sub:'Dec 30 – Jan 1' },
+  SF:{ label:'Semifinals',      sub:'Jan 14–15' },
+  F: { label:'National Championship', sub:'Jan 25 · Las Vegas' },
+};
+
+/* =====================================================================
+   THE BRACKET — defined once as a tree. Layout order is DERIVED from this
+   tree (see ORDER below), so what you see can never disagree with the
+   actual matchups/scoring. (Fixes the World Cup layout bug by design.)
+   slot = {seed:n}  -> team seeded n    |   {from:id} -> winner of that game
+   ===================================================================== */
+const MATCHES = [
+  {id:'r89',  round:'R1', slots:[{seed:8},{seed:9}]},
+  {id:'r710', round:'R1', slots:[{seed:7},{seed:10}]},
+  {id:'r611', round:'R1', slots:[{seed:6},{seed:11}]},
+  {id:'r512', round:'R1', slots:[{seed:5},{seed:12}]},
+
+  {id:'q1', round:'QF', slots:[{seed:1},{from:'r89'}]},
+  {id:'q2', round:'QF', slots:[{seed:2},{from:'r710'}]},
+  {id:'q3', round:'QF', slots:[{seed:3},{from:'r611'}]},
+  {id:'q4', round:'QF', slots:[{seed:4},{from:'r512'}]},
+
+  {id:'s1', round:'SF', slots:[{from:'q1'},{from:'q4'}]},   // 1-side vs 4-side
+  {id:'s2', round:'SF', slots:[{from:'q2'},{from:'q3'}]},   // 2-side vs 3-side
+
+  {id:'final', round:'F', slots:[{from:'s1'},{from:'s2'}]},
+];
+MATCHES.forEach(m => m.pts = PTS[m.round]);
+const MBY = Object.fromEntries(MATCHES.map(m => [m.id, m]));
+const TOTAL_MATCHES = MATCHES.length;
+
+const kids = id => MBY[id].slots.filter(s => s.from).map(s => s.from);
+const ORDER = {};
+ORDER.F  = ['final'];
+ORDER.SF = ORDER.F.flatMap(kids);
+ORDER.QF = ORDER.SF.flatMap(kids);
+ORDER.R1 = ORDER.QF.flatMap(kids);
+const ROUNDS = [
+  {key:'R1', rowSpan:1}, {key:'QF', rowSpan:1}, {key:'SF', rowSpan:2}, {key:'F', rowSpan:4},
+];
+
+/* =====================================================================
+   FIELD (12 teams) — loaded from the database, set in the Admin tab
+   ===================================================================== */
+function defaultTeams(){
+  return Array.from({length:12}, (_,i) => ({seed:i+1, name:'Seed '+(i+1), color:'#9aa3b2'}));
+}
+let TEAMS = defaultTeams();
+let fieldSet = false;
+let deadlineStr = DEFAULT_DEADLINE;
+let deadlineMs = Date.parse(DEFAULT_DEADLINE);
+const isVip = new URLSearchParams(location.search).get('vip') === VIP_CODE;
+function teamOf(seed){ return TEAMS.find(t => t.seed === seed) || {seed:seed, name:'Seed '+seed, color:'#9aa3b2'}; }
+function entriesOpen(){ return fieldSet && (isVip || Date.now() < deadlineMs); }
+function entriesLocked(){ return fieldSet && Date.now() >= deadlineMs; }
+
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function slug(s){ return (s||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+function fmtET(ts){ return new Date(ts).toLocaleString('en-US', {timeZone:'America/New_York', dateStyle:'short', timeStyle:'short'}) + ' ET'; }
+
+function getTeams(match, picks){
+  return match.slots.map(s => s.seed ? s.seed : (picks[s.from] || null));
+}
+function cleanPicks(picks){
+  // Process in dependency order (R1 -> F) so a changed early pick clears every downstream pick that depended on it
+  ['R1','QF','SF','F'].forEach(r => MATCHES.filter(m => m.round === r).forEach(m => {
+    if(!picks[m.id]) return;
+    const [a,b] = getTeams(m, picks);
+    if(picks[m.id] !== a && picks[m.id] !== b) delete picks[m.id];
+  }));
+}
+
+function teamBtnHTML(matchId, seed, slot, picked, editable, state){
+  if(!seed) return '<button class="teambtn tbd" disabled>TBD</button>';
+  const t = teamOf(seed);
+  const cls = 'teambtn' + (picked?' picked':'') + (editable?'':' ro') + (state?(' '+state):'');
+  const bye = (slot && slot.seed && slot.seed <= 4) ? '<span class="bye">BYE</span>' : '';
+  return '<button class="' + cls + '" ' + (editable?'':'disabled ') + 'data-match="' + matchId + '" data-team="' + seed + '">' +
+    '<span class="seed">' + seed + '</span><span class="dot" style="background:' + esc(t.color) + '"></span>' +
+    '<span class="nm">' + esc(t.name) + '</span>' + bye + '</button>';
+}
+
+function renderBracket(container, picks, opts){
+  opts = opts || {};
+  const editable = !!opts.editable, official = opts.official || null;
+  let html = '';
+  ROUNDS.forEach(rd => {
+    const meta = ROUND_META[rd.key];
+    html += '<div><div class="col-head">' + meta.label + ' — ' + PTS[rd.key] + (PTS[rd.key]===1?'pt':'pts') + '<small>' + meta.sub + '</small></div><div class="round">';
+    ORDER[rd.key].forEach((id, i) => {
+      const m = MBY[id];
+      const [a,b] = getTeams(m, picks);
+      const start = i*rd.rowSpan + 1, end = start + rd.rowSpan;
+      const stateFor = seed => {
+        if(!official || !seed || picks[id] !== seed || !official[id]) return '';
+        return official[id] === seed ? 'correct' : 'wrong';
+      };
+      html += '<div class="match" style="grid-row:' + start + '/' + end + '">' +
+        teamBtnHTML(id, a, m.slots[0], picks[id] === a && !!a, editable, stateFor(a)) +
+        teamBtnHTML(id, b, m.slots[1], picks[id] === b && !!b, editable, stateFor(b)) + '</div>';
+    });
+    html += '</div></div>';
+  });
+  const champ = picks.final ? teamOf(picks.final) : null;
+  html += '<div class="champion-col"><div style="width:100%;"><div class="col-head">Champion</div><div class="trophy-card">' +
+    '<div class="cup">🏆</div><div class="label">2026-27 National Champion</div>' +
+    '<div class="blank">' + (champ ? esc(champ.name) : '—') + '</div></div></div></div>';
+  container.innerHTML = html;
+
+  container.onclick = null;
+  if(editable){
+    container.onclick = function(e){
+      const btn = e.target.closest('.teambtn');
+      if(!btn || btn.disabled) return;
+      picks[btn.dataset.match] = parseInt(btn.dataset.team, 10);
+      cleanPicks(picks);
+      renderBracket(container, picks, opts);
+      if(container._onChange) container._onChange();
+    };
+  }
+}
+
+/* =====================================================================
+   Storage (Netlify functions -> Airtable). Same three functions as the World Cup pool.
+   ===================================================================== */
+async function storeGet(key){
+  try{
+    const res = await fetch('/.netlify/functions/kv-get?key=' + encodeURIComponent(key));
+    if(!res.ok) return null;
+    const data = await res.json();
+    return (data.value !== null && data.value !== undefined) ? {value:data.value} : null;
+  }catch(e){ return null; }
+}
+async function storeSet(key, value){
+  try{
+    const res = await fetch('/.netlify/functions/kv-set', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({key:key, value:value})});
+    const text = await res.text();
+    let data = null; try{ data = JSON.parse(text); }catch(e){}
+    if(!res.ok) return {ok:false, error:'HTTP ' + res.status + ': ' + (data && data.error ? data.error : text.slice(0,300))};
+    if(data && data.ok) return {ok:true};
+    return {ok:false, error:'Unexpected response: ' + text.slice(0,300)};
+  }catch(e){ return {ok:false, error:'Network/JS error: ' + e.message}; }
+}
+async function storeList(prefix){
+  try{
+    const res = await fetch('/.netlify/functions/kv-list?prefix=' + encodeURIComponent(prefix));
+    if(!res.ok) return null;
+    const data = await res.json();
+    return {keys:data.keys || []};
+  }catch(e){ return null; }
+}
+
+/* =====================================================================
+   Config load + banner
+   ===================================================================== */
+async function loadConfig(){
+  const res = await storeGet(KEY_PREFIX + 'config');
+  if(res && res.value){
+    try{
+      const cfg = JSON.parse(res.value);
+      if(cfg.teams && cfg.teams.length === 12){ TEAMS = cfg.teams; fieldSet = true; }
+      if(cfg.deadline && !isNaN(Date.parse(cfg.deadline))){ deadlineStr = cfg.deadline; deadlineMs = Date.parse(cfg.deadline); }
+    }catch(e){}
+  }
+  updateBanner();
+  renderBracket(bracketPickEl, myPicks, {editable: entriesOpen()});
+  updateProgress();
+}
+function updateBanner(){
+  const b = document.getElementById('statusBanner');
+  const lockable = document.getElementById('btnSave');
+  if(!fieldSet){
+    b.className = 'banner'; b.textContent = '🏈 The bracket opens when the field is announced on Selection Day — Sunday, Dec 6. Check back then!';
+  } else if(entriesLocked() && !isVip){
+    b.className = 'banner closed'; b.textContent = '🔒 Entries are closed — the playoff is underway. Head to the Leaderboard.';
+  } else {
+    b.className = 'banner open';
+    b.textContent = '✅ Entries are open until ' + fmtET(deadlineMs) + '.';
+  }
+}
+
+/* =====================================================================
+   PICK TAB
+   ===================================================================== */
+const myPicks = {};
+const bracketPickEl = document.getElementById('bracketPick');
+bracketPickEl._onChange = updateProgress;
+renderBracket(bracketPickEl, myPicks, {editable:false});
+
+function updateProgress(){
+  const done = MATCHES.filter(m => myPicks[m.id]).length;
+  document.getElementById('progressText').textContent = done + ' / ' + TOTAL_MATCHES + ' games picked';
+}
+function setSaveMsg(cls, text){
+  const top = document.getElementById('saveMsg'), bottom = document.getElementById('saveMsgBottom');
+  top.className = cls; top.textContent = text;
+  if(bottom){ bottom.className = cls + ' msg-bottom'; bottom.textContent = text; }
+}
+function bracketKey(){
+  return KEY_PREFIX + 'bracket:' + slug(document.getElementById('inpName').value) + '_' + slug(document.getElementById('inpVenmo').value);
+}
+
+document.getElementById('btnReset').onclick = function(){
+  if(!confirm('Clear all your picks?')) return;
+  Object.keys(myPicks).forEach(k => delete myPicks[k]);
+  renderBracket(bracketPickEl, myPicks, {editable: entriesOpen()});
+  updateProgress();
+  setSaveMsg('msg','');
+};
+
+document.getElementById('btnSave').onclick = async function(){
+  if(!entriesOpen()){ setSaveMsg('msg err', fieldSet ? 'Entries are closed.' : 'The bracket is not open yet.'); return; }
+  const name = document.getElementById('inpName').value.trim();
+  const venmo = document.getElementById('inpVenmo').value.trim();
+  const tbRaw = document.getElementById('inpTb').value.trim();
+  if(!name || !venmo){ setSaveMsg('msg err', 'Enter your name and Venmo handle before saving.'); return; }
+  if(tbRaw === '' || isNaN(Number(tbRaw)) || Number(tbRaw) < 0){ setSaveMsg('msg err', 'Enter a tiebreaker: your guess for the total combined points in the title game.'); return; }
+  const done = MATCHES.filter(m => myPicks[m.id]).length;
+  if(done < TOTAL_MATCHES){ setSaveMsg('msg err', 'Pick all ' + TOTAL_MATCHES + ' games first — you have ' + done + ' so far.'); return; }
+  setSaveMsg('msg', 'Saving...');
+  const now = Date.now();
+  const res = await storeSet(bracketKey(), JSON.stringify({name:name, venmo:venmo, picks:myPicks, tiebreak:Number(tbRaw), ts:now}));
+  setSaveMsg(res.ok ? 'msg ok' : 'msg err', res.ok ? ('Saved! "' + name + '" locked in at ' + fmtET(now) + '. You can reload and change it until entries close.') : ('Save failed: ' + res.error));
+};
+document.getElementById('btnSaveBottom').onclick = document.getElementById('btnSave').onclick;
+
+document.getElementById('btnLoad').onclick = async function(){
+  const name = document.getElementById('inpName').value.trim();
+  const venmo = document.getElementById('inpVenmo').value.trim();
+  if(!name || !venmo){ setSaveMsg('msg err', 'Enter your name and Venmo handle, then load.'); return; }
+  setSaveMsg('msg', 'Loading...');
+  const res = await storeGet(bracketKey());
+  if(res && res.value){
+    const data = JSON.parse(res.value);
+    Object.keys(myPicks).forEach(k => delete myPicks[k]);
+    Object.assign(myPicks, data.picks);
+    cleanPicks(myPicks);
+    document.getElementById('inpTb').value = data.tiebreak != null ? data.tiebreak : '';
+    renderBracket(bracketPickEl, myPicks, {editable: entriesOpen()});
+    updateProgress();
+    setSaveMsg('msg ok', 'Loaded your saved bracket' + (data.ts ? (' (saved ' + fmtET(data.ts) + ')') : '') + '.');
+  } else setSaveMsg('msg err', 'No saved bracket found for that name + Venmo.');
+};
+
+document.getElementById('btnPrint').onclick = function(){
+  const name = document.getElementById('inpName').value.trim(), venmo = document.getElementById('inpVenmo').value.trim();
+  document.getElementById('printWho').textContent = (name ? ('Bracket: ' + name + (venmo ? ' · ' + venmo : '')) : 'Name: ______________________   Venmo: ______________________') + '  ·  Printed ' + new Date().toLocaleString();
+  document.querySelector('.print-only').style.display = 'block';
+  window.print();
+};
+
+document.querySelectorAll('.tabbtn').forEach(btn => {
+  btn.onclick = function(){
+    document.querySelectorAll('.tabbtn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tabpanel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  };
+});
+
+/* =====================================================================
+   SCORING
+   ===================================================================== */
+function eliminatedSeeds(official){
+  const out = new Set();
+  MATCHES.forEach(m => {
+    const w = official[m.id]; if(!w) return;
+    const [a,b] = getTeams(m, official);
+    const loser = (w === a) ? b : a;
+    if(loser) out.add(loser);
+  });
+  return out;
+}
+function scoreEntry(picks, official){
+  let points = 0;
+  MATCHES.forEach(m => { if(official[m.id] && picks[m.id] === official[m.id]) points += m.pts; });
+  const dead = eliminatedSeeds(official);
+  let max = points;
+  MATCHES.forEach(m => { if(!official[m.id] && picks[m.id] && !dead.has(picks[m.id])) max += m.pts; });
+  return {points:points, max:max};
+}
+function rankEntries(entries, officialTotal){
+  entries.sort((x,y) => {
+    if(y.points !== x.points) return y.points - x.points;
+    if(officialTotal != null && x.tiebreak != null && y.tiebreak != null){
+      const dx = Math.abs(x.tiebreak - officialTotal), dy = Math.abs(y.tiebreak - officialTotal);
+      if(dx !== dy) return dx - dy;
+    }
+    return (x.ts||0) - (y.ts||0);
+  });
+  return entries;
+}
+
+/* =====================================================================
+   LEADERBOARD
+   ===================================================================== */
+let lbEntries = [], lbOfficial = {};
+async function refreshLeaderboard(){
+  const status = document.getElementById('boardStatus');
+  const tbody = document.querySelector('#lbTable tbody');
+  status.textContent = 'Loading entries...';
+  const list = await storeList(KEY_PREFIX + 'bracket:');
+  const offRes = await storeGet(KEY_PREFIX + 'official');
+  let offData = (offRes && offRes.value) ? JSON.parse(offRes.value) : {};
+  lbOfficial = offData.picks || {};
+  if(!list || !list.keys.length){ tbody.innerHTML = ''; lbEntries = []; status.textContent = 'No brackets saved yet.'; return; }
+  const entries = [];
+  for(const key of list.keys){
+    const r = await storeGet(key);
+    if(!(r && r.value)) continue;
+    const d = JSON.parse(r.value);
+    const s = scoreEntry(d.picks || {}, lbOfficial);
+    entries.push({name:d.name, venmo:d.venmo, picks:d.picks || {}, tiebreak:d.tiebreak, ts:d.ts, points:s.points, max:s.max});
+  }
+  rankEntries(entries, offData.finalTotal != null ? offData.finalTotal : null);
+  lbEntries = entries;
+  const revealed = entriesLocked() || isVip;
+  tbody.innerHTML = entries.map((e,i) => {
+    const champ = e.picks.final ? teamOf(e.picks.final).name : '—';
+    return '<tr data-idx="' + i + '"><td>' + (i+1) + '</td><td>' + esc(e.name) + '</td><td>' + (revealed ? esc(champ) : '🔒') +
+      '</td><td><span class="pill">' + e.points + '</span></td><td>' + e.max + '</td></tr>';
+  }).join('');
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.onclick = function(){
+      const entry = lbEntries[parseInt(tr.dataset.idx, 10)];
+      if(!revealed){ status.textContent = 'Brackets are hidden until entries close, so nobody can copy picks.'; return; }
+      document.getElementById('lbDetailName').textContent = entry.name + ' — tiebreak: ' + (entry.tiebreak != null ? entry.tiebreak : '—');
+      document.getElementById('lbDetailWrap').style.display = 'block';
+      renderBracket(document.getElementById('bracketLbDetail'), entry.picks, {editable:false, official:lbOfficial});
+      document.getElementById('lbDetailWrap').scrollIntoView({behavior:'smooth'});
+    };
+  });
+  status.textContent = entries.length + ' bracket' + (entries.length===1?'':'s') + ' · ' + Object.keys(lbOfficial).length + ' of ' + TOTAL_MATCHES + ' games final · updated ' + new Date().toLocaleTimeString();
+}
+document.getElementById('btnRefreshBoard').onclick = refreshLeaderboard;
+document.getElementById('btnCloseLbDetail').onclick = () => { document.getElementById('lbDetailWrap').style.display = 'none'; };
+let lbPoll = null;
+document.querySelectorAll('.tabbtn').forEach(btn => btn.addEventListener('click', function(){
+  if(lbPoll){ clearInterval(lbPoll); lbPoll = null; }
+  if(btn.dataset.tab === 'board'){ refreshLeaderboard(); lbPoll = setInterval(refreshLeaderboard, 30000); }
+}));
+
+/* =====================================================================
+   ADMIN
+   ===================================================================== */
+const officialPicks = {};
+const bracketAdminEl = document.getElementById('bracketAdmin');
+renderBracket(bracketAdminEl, officialPicks, {editable:true});
+
+function buildCfgRows(){
+  document.getElementById('cfgRows').innerHTML = TEAMS.map(t =>
+    '<div class="cfgrow"><div class="sd">#' + t.seed + '</div>' +
+    '<input type="text" data-seed="' + t.seed + '" value="' + esc(fieldSet ? t.name : '') + '" placeholder="Team for seed ' + t.seed + '">' +
+    '<input type="color" data-color="' + t.seed + '" value="' + esc(t.color || '#9aa3b2') + '"></div>').join('');
+}
+buildCfgRows();
+
+document.getElementById('btnSaveField').onclick = async function(){
+  const msg = document.getElementById('fieldMsg');
+  const teams = [];
+  for(let s = 1; s <= 12; s++){
+    const name = document.querySelector('input[data-seed="' + s + '"]').value.trim();
+    const color = document.querySelector('input[data-color="' + s + '"]').value;
+    if(!name){ msg.style.color = '#ff9b8a'; msg.textContent = 'Seed ' + s + ' needs a team name.'; return; }
+    teams.push({seed:s, name:name, color:color});
+  }
+  const dl = document.getElementById('inpDeadline').value.trim();
+  if(isNaN(Date.parse(dl))){ msg.style.color = '#ff9b8a'; msg.textContent = 'Deadline format looks wrong. Example: 2026-12-18T20:00:00-05:00'; return; }
+  msg.style.color = ''; msg.textContent = 'Saving...';
+  const res = await storeSet(KEY_PREFIX + 'config', JSON.stringify({teams:teams, deadline:dl, updatedAt:Date.now()}));
+  msg.style.color = res.ok ? '#7ee0a8' : '#ff9b8a';
+  msg.textContent = res.ok ? 'Saved — the bracket is now open to everyone.' : ('Save failed: ' + res.error);
+  if(res.ok){ TEAMS = teams; fieldSet = true; deadlineStr = dl; deadlineMs = Date.parse(dl); updateBanner();
+    renderBracket(bracketPickEl, myPicks, {editable: entriesOpen()});
+    renderBracket(bracketAdminEl, officialPicks, {editable:true}); }
+};
+
+document.getElementById('btnUnlock').onclick = function(){
+  if(document.getElementById('pinInput').value === ADMIN_PIN){
+    document.getElementById('pinGate').style.display = 'none';
+    document.getElementById('adminContent').style.display = 'block';
+    document.getElementById('inpDeadline').value = deadlineStr;
+    buildCfgRows(); loadOfficialResults(); loadSubmissions();
+  } else document.getElementById('pinErr').textContent = 'Incorrect PIN.';
+};
+
+async function loadOfficialResults(){
+  const msg = document.getElementById('resultsMsg');
+  msg.className = 'msg'; msg.textContent = 'Loading official results...';
+  const res = await storeGet(KEY_PREFIX + 'official');
+  if(res && res.value){
+    const data = JSON.parse(res.value);
+    Object.keys(officialPicks).forEach(k => delete officialPicks[k]);
+    Object.assign(officialPicks, data.picks || {});
+    document.getElementById('admTb').value = data.finalTotal != null ? data.finalTotal : '';
+    renderBracket(bracketAdminEl, officialPicks, {editable:true});
+    document.getElementById('lastUpdated').textContent = data.updatedAt ? ('Last updated: ' + new Date(data.updatedAt).toLocaleString()) : '';
+    msg.className = 'msg ok'; msg.textContent = 'Loaded official results.';
+  } else { msg.className = 'msg'; msg.textContent = 'No official results saved yet — click the winner of each game as it finishes.'; }
+}
+document.getElementById('btnLoadResults').onclick = loadOfficialResults;
+document.getElementById('btnSaveResults').onclick = async function(){
+  const msg = document.getElementById('resultsMsg');
+  msg.className = 'msg'; msg.textContent = 'Saving official results...';
+  const tb = document.getElementById('admTb').value.trim();
+  const res = await storeSet(KEY_PREFIX + 'official', JSON.stringify({picks:officialPicks, finalTotal: tb === '' ? null : Number(tb), updatedAt:Date.now()}));
+  msg.className = res.ok ? 'msg ok' : 'msg err';
+  msg.textContent = res.ok ? 'Saved. Leaderboard updates on its next refresh.' : ('Save failed: ' + res.error);
+  if(res.ok) document.getElementById('lastUpdated').textContent = 'Last updated: ' + new Date().toLocaleString();
+};
+
+async function loadSubmissions(){
+  const status = document.getElementById('submissionsStatus');
+  const tbody = document.querySelector('#submissionsTable tbody');
+  status.textContent = 'Loading submissions...'; tbody.innerHTML = '';
+  const list = await storeList(KEY_PREFIX + 'bracket:');
+  if(!list || !list.keys.length){ status.textContent = 'No brackets submitted yet.'; return; }
+  const rows = [];
+  for(const key of list.keys){ const r = await storeGet(key); if(r && r.value) rows.push(JSON.parse(r.value)); }
+  rows.sort((a,b) => (a.ts||0) - (b.ts||0));
+  status.textContent = rows.length + ' bracket' + (rows.length===1?'':'s') + ' submitted';
+  tbody.innerHTML = rows.map((d,i) =>
+    '<tr><td>' + esc(d.name) + '</td><td>' + esc(d.venmo) + '</td><td>' + (d.ts ? fmtET(d.ts) : '—') + '</td><td>' +
+    esc(d.picks && d.picks.final ? teamOf(d.picks.final).name : '—') + '</td><td>' + (d.tiebreak != null ? esc(d.tiebreak) : '—') +
+    '</td><td><button class="btn btn-ghost" data-idx="' + i + '" style="padding:4px 10px; font-size:10.5px;">View</button></td></tr>').join('');
+  tbody.querySelectorAll('button[data-idx]').forEach(btn => btn.onclick = function(){
+    const d = rows[parseInt(btn.dataset.idx, 10)];
+    document.getElementById('submissionDetailName').textContent = d.name + ' — ' + d.venmo;
+    document.getElementById('submissionDetailWrap').style.display = 'block';
+    renderBracket(document.getElementById('bracketSubmissionDetail'), d.picks || {}, {editable:false});
+    document.getElementById('submissionDetailWrap').scrollIntoView({behavior:'smooth'});
+  });
+}
+document.getElementById('btnLoadSubmissions').onclick = loadSubmissions;
+document.getElementById('btnCloseSubmissionDetail').onclick = () => { document.getElementById('submissionDetailWrap').style.display = 'none'; };
+
+loadConfig();
+updateBanner();
+updateProgress();
+</script>
+</body>
+</html>
